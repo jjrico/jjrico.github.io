@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <title>362 Project</title>
+
   <script src="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.js"></script>
   <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.css" />
-  <title>362 Project</title>
+
   <style type="text/css">
     body {
       text-align: center;
@@ -11,33 +13,65 @@
     }
   </style>
 </head>
+<!-- The core Firebase JS SDK is always required and must be listed first -->
+<script src="https://www.gstatic.com/firebasejs/7.0.0/firebase-app.js"></script>
+
+<!-- TODO: Add SDKs for Firebase products that you want to use
+      https://firebase.google.com/docs/web/setup#available-libraries -->
+
+<script src="https://www.gstatic.com/firebasejs/7.0.0/firebase-analytics.js"></script>
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyC6HOV_x318odYmVQaiaUgljdI9r5hO838",
+    authDomain: "raspberry-drive-f3071.firebaseapp.com",
+    databaseURL: "https://raspberry-drive-f3071.firebaseio.com",
+    projectId: "raspberry-drive-f3071",
+    storageBucket: "",
+    messagingSenderId: "1097525356797",
+    appId: "1:1097525356797:web:7b68a121605052777df694",
+    measurementId: "G-02T7NMCWE8"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  firebase.analytics();
+</script>
+
+<script src="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.js"></script>
+<link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.css" />
+<script type="text/javascript">
+  // FirebaseUI config.
+  var uiConfig = {
+    signInSuccessUrl: '<url-to-redirect-to-on-success>',
+    signInOptions: [
+      // Leave the lines as is for the providers you want to offer your users.
+      firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+      firebase.auth.FacebookAuthProvider.PROVIDER_ID,
+      firebase.auth.TwitterAuthProvider.PROVIDER_ID,
+      firebase.auth.GithubAuthProvider.PROVIDER_ID,
+      firebase.auth.EmailAuthProvider.PROVIDER_ID,
+      firebase.auth.PhoneAuthProvider.PROVIDER_ID,
+      firebaseui.auth.AnonymousAuthProvider.PROVIDER_ID
+    ],
+    // tosUrl and privacyPolicyUrl accept either url string or a callback
+    // function.
+    // Terms of service url/callback.
+    tosUrl: '<your-tos-url>',
+    // Privacy policy url/callback.
+    privacyPolicyUrl: function() {
+      window.location.assign('<your-privacy-policy-url>');
+    }
+  };
+
+  // Initialize the FirebaseUI Widget using Firebase.
+  var ui = new firebaseui.auth.AuthUI(firebase.auth());
+  // The start method will wait until the DOM is loaded.
+  ui.start('#firebaseui-auth-container', uiConfig);
+</script>
+
 <body>
   <h1>Welcome to Raspberry Drive!</h1>
-
-  <!-- The core Firebase JS SDK is always required and must be listed first -->
-  <script src="https://www.gstatic.com/firebasejs/7.0.0/firebase-app.js"></script>
-
-  <!-- TODO: Add SDKs for Firebase products that you want to use
-        https://firebase.google.com/docs/web/setup#available-libraries -->
-
-  <script src="https://www.gstatic.com/firebasejs/7.0.0/firebase-analytics.js"></script>
-
-  <script>
-    // Your web app's Firebase configuration
-    var firebaseConfig = {
-      apiKey: "AIzaSyC6HOV_x318odYmVQaiaUgljdI9r5hO838",
-      authDomain: "raspberry-drive-f3071.firebaseapp.com",
-      databaseURL: "https://raspberry-drive-f3071.firebaseio.com",
-      projectId: "raspberry-drive-f3071",
-      storageBucket: "",
-      messagingSenderId: "1097525356797",
-      appId: "1:1097525356797:web:7b68a121605052777df694",
-      measurementId: "G-02T7NMCWE8"
-    };
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
-    firebase.analytics();
-  </script>
 
 </body>
 </html>
