@@ -11,6 +11,7 @@ import os
 import re
 
 s3 = boto3.resource("s3")
+s3_client = boto3.client("s3")
 DEFAULT_BUCKET = s3.Bucket("rbddev-test-bucket")
 rbddev_test_bucket = s3.Bucket("rbddev-test-bucket")
 #------------------------------------------------------------------------------
@@ -30,6 +31,8 @@ class Unit:
         self.parent = parent
         self.bucket = bucket
         self.UpdatePath()
+        if(self.parent != None):
+            self.parent.AddChild(child=self)
     
     def Delete(self):
         if(self.path_full == None):
@@ -53,6 +56,7 @@ class Unit:
         self.parent.AddChild(self)
         copy_source = {"Bucket" : self.bucket.name, "Key" : old_path}
         s3.meta.client.copy(copy_source, self.bucket.name, self.path_full)
+        s3.Object(self.bucket.name, old_path).delete()
     
     def Rename(self, name):
         if(self.path_full == None):
@@ -63,25 +67,30 @@ class Unit:
         self.UpdatePath()
         copy_source = {"Bucket" : self.bucket.name, "Key" : old_path}
         s3.meta.client.copy(copy_source, self.bucket.name, self.path_full)
+        s3.Object(self.bucket.name, old_path).delete()
     
     def Download(self, location):
         if(self.path_full == None):
             self.UpdatePath()
         
-        s3.download_file(self.bucket.name, self.path, location)
+        with open(location, 'wb') as f:
+            s3_client.download_fileobj(self.bucket.name, self.path_full, f)
     
     def UpdatePath(self):
         self.path_parent = self.ComputePath(False)
-        self.path_full = self.path_parent + self.name
+        self.path_full = self.ComputePath(True)
     
     def ComputePath(self, full_path=True):
         if(self.parent == None):
-            return self.name
+            if(full_path):
+                return self.name
+            else:
+                return ""
         
         if(full_path):
-            return self.ComputePath(self, True) + "/" + self.name
+            return self.parent.ComputePath(True) + self.name
         else:
-            return self.ComputePath(self, True) + "/"
+            return self.parent.ComputePath(True)
     
     def HasPermission(self, user):
         for group in self.group_list:
@@ -107,7 +116,11 @@ class Unit:
 # Folder (Class)
 #------------------------------------------------------------------------------
 class Folder(Unit):
-    children = dict()
+    def __init__(self, name, parent, bucket, file=None):
+        self.children = dict()
+        
+        super().__init__(name, parent, bucket)
+        self.CreateFolder()
     
     def AddChild(self, child):
         self.children[child.name] = child
@@ -117,7 +130,7 @@ class Folder(Unit):
             del self.children[child.name]
     
     def Delete(self, start=True):
-        for child in self.children:
+        for child in self.children.values():
             child.Delete()
         
         if(start):
@@ -131,27 +144,39 @@ class Folder(Unit):
     def Move(self, parent):
         super().Move(parent)
         
-        for child in self.children:
+        for child in self.children.values():
             child.Move(self)
     
     def Rename(self, name):
         super().Rename(name)
         
-        for child in self.children:
+        for child in self.children.values():
             child.Move(child.name)
     
     def Download(self, location):
         location = location + self.name + '/'
         os.makedirs(location)
         
-        for child in self.children:
+        for child in self.children.values():
             child.Download(location)
     
     def UpdatePath(self):
         super().UpdatePath()
         
-        for child in self.children:
+        for child in self.children.values():
             child.UpdatePath()
+            
+    def ComputePath(self, full_path=True):
+        if(self.parent == None):
+            if(full_path):
+                return self.name + "/"
+            else:
+                return ""
+        
+        if(full_path):
+            return self.parent.ComputePath(True) + self.name + "/"
+        else:
+            return self.parent.ComputePath(True)
     
     '''def AddUserPermission(self):
         return
@@ -167,11 +192,25 @@ class Folder(Unit):
     
     def UpdatePermissions(self):
         return'''
+        
+    def CreateFolder(self):
+        folder = s3.Object(self.bucket.name, self.path_full)
+        folder.put(Body='')
 
 #------------------------------------------------------------------------------
 # File (Class)
 #------------------------------------------------------------------------------
 class File(Unit):
+    def __init__(self, name, parent, bucket, file=None):
+        super().__init__(name, parent, bucket)
+        
+        if(file != None):
+            self.UploadFile(file)
+   
+    def UploadFile(self, file):
+        self.bucket.upload_file(file, self.path_full)
+        return
+    
     def Preview():
         return 
 
