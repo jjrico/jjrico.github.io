@@ -1,6 +1,7 @@
 #sources: https://www.youtube.com/channel/UCCezIgC97PvUuR4_gbFUs5g
 from flask import render_template, url_for, flash, redirect, request
-from rbdrive import app, db, bcrypt
+from rbdrive import app, db, bcrypt, rbd_storage
+#from rbd_storage import *
 from rbdrive.forms import RegistrationForm, LoginForm
 from rbdrive.models import User, Post
 from flask_login import login_user, current_user, logout_user, login_required
@@ -67,6 +68,12 @@ def account():
         if request.files:
 
             image = request.files["image"]
+            image.save(os.path.join(app.config["UPLOAD_FOLDER"], image.filename))
+
+            file = rbd_storage.File(image.filename,None,rbd_storage.rbddev_test_bucket, "/home/miguel/Raspberry_Drive/rbdrive/static/" + image.filename)
+
+
+
 
             image.save(os.path.join(app.config["UPLOAD_FOLDER"], image.filename))
 
