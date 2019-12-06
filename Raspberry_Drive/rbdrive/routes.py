@@ -1,9 +1,9 @@
 #sources: https://www.youtube.com/channel/UCCezIgC97PvUuR4_gbFUs5g
 from flask import render_template, url_for, flash, redirect, request
-from rbdrive import app, db, bcrypt, rbd_storage
-#from rbd_storage import *
+from rbdrive import app, db, bcrypt
+from .rbd_storage import *
 from rbdrive.forms import RegistrationForm, LoginForm
-from rbdrive.models import User, Post
+from rbdrive.models import *
 from flask_login import login_user, current_user, logout_user, login_required
 from werkzeug.utils import secure_filename
 import os
@@ -62,25 +62,35 @@ def logout():
 
 @app.route("/account", methods=['GET', 'POST'])
 @login_required
+
 def account():
+
     if request.method == "POST":
 
         if request.files:
+            
+            folder = Folder(current_user.username,None,rbddev_test_bucket)
+            file = request.files["file"]
+            file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
 
-            image = request.files["image"]
-            image.save(os.path.join(app.config["UPLOAD_FOLDER"], image.filename))
+            file =File(file.filename,None,rbddev_test_bucket,current_user.username+"/"+file.filename, "/home/miguel/Raspberry_Drive/rbdrive/static/" + file.filename)
 
-            file = rbd_storage.File(image.filename,None,rbd_storage.rbddev_test_bucket, "/home/miguel/Raspberry_Drive/rbdrive/static/" + image.filename)
-
-
+            flash('File Saved', 'success')
+            print("Image saved", current_user.username)
 
 
-            image.save(os.path.join(app.config["UPLOAD_FOLDER"], image.filename))
-
-            print("Image saved")
 
             return redirect(request.url)
-    return render_template('account.html', title='Account')
+        return render_template('account.html', title='Account')
+    else:
+        unit = Unit(current_user.username, None, rbddev_test_bucket)
+        for file in rbddev_test_bucket.objects.filter( Prefix=str(current_user.username)):
+            print(file.key)
+            rbddev_test_bucket.download_file(str(file.key), '/home/miguel/Documents/')
+
+        return render_template('account.html', title='Account')
+
+    
 
 
 
