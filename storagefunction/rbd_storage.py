@@ -12,8 +12,8 @@ import re
 
 s3 = boto3.resource("s3")
 s3_client = boto3.client("s3")
-DEFAULT_BUCKET = s3.Bucket("rbddev-test-bucket")
-rbddev_test_bucket = s3.Bucket("rbddev-test-bucket")
+DEFAULT_BUCKET = s3.Bucket("rbddrive")
+rbddev_test_bucket = s3.Bucket("rbddrive")
 #------------------------------------------------------------------------------
 # Unit (Class)
 #------------------------------------------------------------------------------
@@ -201,14 +201,17 @@ class Folder(Unit):
 # File (Class)
 #------------------------------------------------------------------------------
 class File(Unit):
-    def __init__(self, name, parent, bucket, file=None):
+    def __init__(self, name, parent, bucket,path, file=None):
         super().__init__(name, parent, bucket)
         
         if(file != None):
-            self.UploadFile(file)
+            self.UploadFile(path,file)
    
-    def UploadFile(self, file):
-        self.bucket.upload_file(file, self.path_full)
+    def UploadFile(self,path,file):
+        if (path==None):
+            path = self.path_full
+
+        self.bucket.upload_file(file, path)
         return
     
     def Preview():
