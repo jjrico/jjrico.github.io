@@ -222,6 +222,7 @@ class File(Unit):
             path = self.path_full
 
         self.bucket.upload_file(file, path)
+        return
     
     def Preview():
         return 
