@@ -6,7 +6,34 @@
 
 <div class="container">
   <div class="row">
-    <div class="col">
+    <div class="col-12-xs">
+    <h3>{{current_user.username}} Drive</h3>
+  
+     <table class="table table">
+        <tr>
+          <th>Filename</th>
+          <th></th>
+        </tr>
+        {% for f in files %}
+        <tr>
+          <td>{{ f.key }}</td>
+          <td class="td-buttons">
+            <form class="delete-form" action="{{ url_for('delete') }}" method="POST">
+              <input type="hidden" name="key" value="{{ f.key }}">
+              <button type="submit" class="btn btn-danger btn-sm">
+                <i class="fa fa-trash-alt"></i>
+              </button>
+            </form>
+            <form class="download-form" action="{{ url_for('download') }}" method="POST">
+              <input type="hidden" name="key" value="{{ f.key }}">
+              <button type="submit" class="btn btn-default btn-sm">
+                <i class="fa fa-download"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </table>
 
 		<h2>Upload a file</h2>
      	<hr>

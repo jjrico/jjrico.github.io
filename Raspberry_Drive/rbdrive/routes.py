@@ -1,5 +1,5 @@
 #sources: https://www.youtube.com/channel/UCCezIgC97PvUuR4_gbFUs5g
-from flask import render_template, url_for, flash, redirect, request
+from flask import render_template, url_for, flash, redirect, request, Response
 from rbdrive import app, db, bcrypt
 from .rbd_storage import *
 from rbdrive.forms import RegistrationForm, LoginForm
@@ -68,7 +68,7 @@ def account():
     if request.method == "POST":
 
         if request.files:
-            
+                
             folder = Folder(current_user.username,None,rbddev_test_bucket)
             file = request.files["file"]
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], file.filename))
@@ -83,17 +83,55 @@ def account():
             return redirect(request.url)
         return render_template('account.html', title='Account')
     else:
-        unit = Unit(current_user.username, None, rbddev_test_bucket)
-        for file in rbddev_test_bucket.objects.filter( Prefix=str(current_user.username)):
-            print(file.key)
-            rbddev_test_bucket.download_file(str(file.key), '/home/miguel/Documents/')
+        #username = current_user.username
+        #unit= Unit(current_user.username,None,rbddev_test_bucket)
+        #unit.Download('/'+username)     
+       
+        #file = s3.Bucket(rbddev_test_bucket).Object('credentials.csv')
+        summaries = rbddev_test_bucket.objects.filter( Prefix=str(current_user.username))
 
-        return render_template('account.html', title='Account')
+        #unit = Unit(current_user.username, None, rbddev_test_bucket)
+        #for file in rbddev_test_bucket.objects.filter( Prefix=str(current_user.username)):
+        #    print(file.key)
+        #    unit.Download('/home/miguel/Raspberry_Drive/static')
+
+        return render_template('account.html', title='Account',bucket = rbddev_test_bucket, files = summaries)
 
     
+@app.route('/delete', methods=['POST'])
+def delete():
+    key = request.form['key']
+
+   
+    rbddev_test_bucket.Object(key).delete()
+
+    flash('File deleted successfully')
+    return redirect(url_for('files'))
+
+
+@app.route('/download', methods=['POST'])
+def download():
+    key = request.form['key']
+
+    file_obj = rbddev_test_bucket.Object(key).get()
+
+    return Response(
+        file_obj['Body'].read(),
+        mimetype='text/plain',
+        headers={"Content-Disposition": "attachment;filename={}".format(key)}
+     )
+
+
+#def download_file_with_client(key):
+  
+#    client.download_file(bucket_name, key, local_path)
+ #   print('Downloaded frile with boto3 client')
 
 
 
 
+#local_path = '<e.g. ./log.txt>'
+
+#download_file_with_client(access_key, secret_key, bucket_name, key, local_path)
 
 
