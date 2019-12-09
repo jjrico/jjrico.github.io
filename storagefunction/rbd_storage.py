@@ -12,8 +12,8 @@ import re
 
 s3 = boto3.resource("s3")
 s3_client = boto3.client("s3")
-DEFAULT_BUCKET = s3.Bucket("rbddrive")
-rbddev_test_bucket = s3.Bucket("rbddrive")
+DEFAULT_BUCKET = s3.Bucket("rbddev-test-bucket")
+rbddev_test_bucket = s3.Bucket("rbddev-test-bucket")
 #------------------------------------------------------------------------------
 # Unit (Class)
 #------------------------------------------------------------------------------
@@ -33,6 +33,7 @@ class Unit:
         self.UpdatePath()
         if(self.parent != None):
             self.parent.AddChild(child=self)
+        print(self.path_full)
     
     def Delete(self):
         if(self.path_full == None):
@@ -43,7 +44,7 @@ class Unit:
         
         s3.Object(self.bucket.name, self.path_full).delete()
     
-    def Move(self, parent):
+    def Move(self, parent, isCopying=False):
         if(self.parent != None):
             self.parent.RemoveChild(self)
         
@@ -52,11 +53,16 @@ class Unit:
         old_path = self.path_full
         
         self.parent = parent
-        self.UpdatePath()
+        if(isinstance(self, Folder)):
+            self.UpdatePath(update_children=False)
+        else:
+            self.UpdatePath()
         self.parent.AddChild(self)
         copy_source = {"Bucket" : self.bucket.name, "Key" : old_path}
         s3.meta.client.copy(copy_source, self.bucket.name, self.path_full)
-        s3.Object(self.bucket.name, old_path).delete()
+        self.old_path = old_path
+        if(not isCopying):
+            s3.Object(self.bucket.name, old_path).delete()
     
     def Rename(self, name):
         if(self.path_full == None):
@@ -141,17 +147,20 @@ class Folder(Unit):
         self.children.clear()
         self.parent.RemoveChild(self)
     
-    def Move(self, parent):
-        super().Move(parent)
+    def Move(self, parent, isCopying=False):
+        super().Move(parent, isCopying=True)
         
-        for child in self.children.values():
-            child.Move(self)
+        for child in list(self.children.values()):
+            child.Move(self, isCopying)
+            
+        if(not isCopying):
+            s3.Object(self.bucket.name, self.old_path).delete()
     
     def Rename(self, name):
         super().Rename(name)
         
         for child in self.children.values():
-            child.Move(child.name)
+            child.Move(self)
     
     def Download(self, location):
         location = location + self.name + '/'
@@ -160,11 +169,12 @@ class Folder(Unit):
         for child in self.children.values():
             child.Download(location)
     
-    def UpdatePath(self):
+    def UpdatePath(self, update_children=False):
         super().UpdatePath()
         
-        for child in self.children.values():
-            child.UpdatePath()
+        if(update_children):
+            for child in self.children.values():
+                child.UpdatePath()
             
     def ComputePath(self, full_path=True):
         if(self.parent == None):
@@ -201,17 +211,14 @@ class Folder(Unit):
 # File (Class)
 #------------------------------------------------------------------------------
 class File(Unit):
-    def __init__(self, name, parent, bucket,path, file=None):
+    def __init__(self, name, parent, bucket, file=None):
         super().__init__(name, parent, bucket)
         
         if(file != None):
-            self.UploadFile(path,file)
+            self.UploadFile(file)
    
-    def UploadFile(self,path,file):
-        if (path==None):
-            path = self.path_full
-
-        self.bucket.upload_file(file, path)
+    def UploadFile(self, file):
+        self.bucket.upload_file(file, self.path_full)
         return
     
     def Preview():
